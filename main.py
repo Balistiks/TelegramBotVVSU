@@ -25,7 +25,7 @@ async def start(message: types.Message):
 async def callBack_handler(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_reply_markup(reply_markup=None)
     if call.data == "prof":
-        await States.business.set()
+        await States.prof.set()
         await state.update_data({'number': 0})
         await state.update_data({'business': 0})
         await state.update_data({'risk': 0})
@@ -35,11 +35,11 @@ async def callBack_handler(call: types.CallbackQuery, state: FSMContext):
         await state.update_data({'nature': 0})
         await state.update_data({'sign': 0})
         await state.update_data({'art': 0})
-        await test(call, state)
+        await question(call, state)
 
 
-@dp.callback_query_handler(state=States)
-async def test(call: types.CallbackQuery, state: FSMContext):
+@dp.callback_query_handler(state=States.prof)
+async def question(call: types.CallbackQuery, state: FSMContext):
     print(await state.get_state())
     try:
         await call.message.edit_reply_markup(reply_markup=None)
@@ -48,27 +48,22 @@ async def test(call: types.CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
     number = data['number']
-    try:
-        state_question = questions['type'][number+1]
-    except:
-        state_question = questions['type'][number-1]
-    state_user = await state.get_state()
-    state_user = state_user[7::1]
 
-    if state_user != state_question:
-        await States.next()
     if call.data == 'yes':
+        print("yes")
+        print(questions['type'][number-1])
         score_type = data[questions['type'][number-1]]
         if not pandas.isnull(questions.loc[number-1, 'gif_yes']):
             await call.message.answer_video(questions['gif_yes'][number-1])
         await call.message.answer(text=questions['answer_yes'][number-1])
         await state.update_data({questions['type'][number-1]: score_type + 1})
     elif call.data == 'no':
-        if not pandas.isnull(questions.loc[number-1, 'gif_yes']):
+        if not pandas.isnull(questions.loc[number-1, 'gif_no']):
             await call.message.answer_video(questions['gif_no'][number-1])
         await call.message.answer(text=questions['answer_no'][number-1])
 
     if number <= 33:
+        print(number)
         keyboard_answer = types.InlineKeyboardMarkup()
         keyboard_answer.add(types.InlineKeyboardButton(text=questions['button_yes'][number], callback_data="yes"))
         keyboard_answer.add(types.InlineKeyboardButton(text=questions['button_no'][number], callback_data='no'))
@@ -76,15 +71,20 @@ async def test(call: types.CallbackQuery, state: FSMContext):
         number = data['number'] + 1
         await state.update_data({'number': number})
     else:
-        print(data['number'])
-        print(data['business'])
-        print(data['risk'])
-        print(data['science'])
-        print(data['technic'])
-        print(data['communication'])
-        print(data['nature'])
-        print(data['sign'])
-        print(data['art'])
+        await end_prof(call, state)
+
+
+async def end_prof(call, state):
+    data = await state.get_data()
+
+    print(data['business'])
+    print(data['risk'])
+    print(data['science'])
+    print(data['technic'])
+    print(data['communication'])
+    print(data['nature'])
+    print(data['sign'])
+    print(data['art'])
     
 
 
