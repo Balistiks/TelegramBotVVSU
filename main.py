@@ -5,12 +5,17 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from states import States
 import config
 import pandas
+import numpy as np
+from numpy.linalg import norm
 
 questions = pandas.read_excel('proftest.xlsx')
+cnt_types=questions['type'].value_counts()
 
 bot = Bot(token=config.TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
+business_inf = np.array([0.4,0.2,0,0,0,0.4])
+prik_math = np.array([1,0,0,0,0,0])
 
 @dp.message_handler(commands="start")
 async def start(message: types.Message):
@@ -25,6 +30,7 @@ async def start(message: types.Message):
 async def callBack_handler(call: types.CallbackQuery, state: FSMContext):
     await call.message.edit_reply_markup(reply_markup=None)
     if call.data == "prof":
+        # добавить приветствия из оригинального теста + ввод имени и номера + сохранения номера и username из tg
         await States.prof.set()
         await state.update_data({'number': 0})
         await state.update_data({'business': 0})
@@ -76,15 +82,16 @@ async def question(call: types.CallbackQuery, state: FSMContext):
 
 async def end_prof(call, state):
     data = await state.get_data()
+    user_score = []
+    for i in ['sign','communication','art','technic','nature','business']:
+        user_score.append(data[i]/cnt_types[i])
+    user_score = np.array(user_score)
+    for spec in [business_inf,prik_math]:
+        print('Расстояние между векторами a и b: {norm}'.format(norm = norm(user_score-spec, ord=1)))
+    # создать структуру для хранения расстояний для каждого направления подготовки(например, датафрейм)
+    # выдать пользователю топ5 направлений с наименьшим расстоянием
 
-    print(data['business'])
-    print(data['risk'])
-    print(data['science'])
-    print(data['technic'])
-    print(data['communication'])
-    print(data['nature'])
-    print(data['sign'])
-    print(data['art'])
+
     
 
 
